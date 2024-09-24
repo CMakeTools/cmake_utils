@@ -23,10 +23,14 @@ function(get_all_target_dependancies CUR_TARGET TOP_TARGET TARGET_LIST)
     endif()
 
     if(NOT(linkLibs STREQUAL "linkLibs-NOTFOUND"))
+        #message("linkLibs is ${linkLibs}")
         foreach(lib IN LISTS linkLibs)
             #message("lib is ${lib}")
 
-            if(TARGET ${lib})
+
+            list(FIND ${TARGET_LIST} ${lib} libAlreadyExists)
+
+            if( (TARGET ${lib}) AND (${libAlreadyExists} EQUAL "-1"))
 
                 #get real target
                 get_target_property(realLib ${lib} ALIASED_TARGET)
@@ -120,23 +124,23 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                 else()
                     get_target_property(imported_loc ${lib} IMPORTED_LOCATION_${CMAKE_BUILD_TYPE})
                 endif()
-                #message("imported_loc is ${imported_loc}")
+                #message("imported_loc for ${lib} is ${imported_loc}")
 
 
-                if((${target_type} STREQUAL "SHARED_LIBRARY"))
+                if((${target_type} STREQUAL "SHARED_LIBRARY") OR (${target_type} STREQUAL "MODULE_LIBRARY"))
                     get_target_property(imported_so_name ${lib} IMPORTED_SONAME)
                     if(NOT (${imported_so_name} STREQUAL "imported_so_name-NOTFOUND"))
                         #message("IMPORTED_SONAME for target: ${lib} is ${imported_so_name}")
                         if(imported_loc)
                             list(APPEND ${BINARY_PATHS_LIST} ${imported_loc})
-                           # message("appending to list ${imported_loc}")
+                            #message("appending to list ${imported_loc}")
 
                             cmake_path(GET imported_loc STEM baseName)
                             cmake_path(GET imported_loc PARENT_PATH dir)
 
                         else()
                             list(APPEND ${BINARY_PATHS_LIST} ${full_binary_dir}/${imported_so_name})
-                           # message("appending to list ${full_binary_dir}/${imported_so_name}")
+                            #message("appending to list ${full_binary_dir}/${imported_so_name}")
                             cmake_path(GET imported_so_name STEM baseName)
                             set(dir ${full_binary_dir})
 
@@ -145,7 +149,7 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                         
                         
 
-                        #gather symbolic links (TODO Cather this code)
+                        #gather symbolic links (TODO Gather this code)
                         if(${OS_MACOS})
                             if(lib_soversion)
                                 list(APPEND ${BINARY_PATHS_LIST} ${dir}/${baseName}.${lib_soversion}.dylib) 
@@ -173,7 +177,7 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                             cmake_path(GET libFilePath STEM baseName)
                             cmake_path(GET libFilePath PARENT_PATH dir)
 
-                            #gather symbolic links (TODO Cather this code)
+                            #gather symbolic links (TODO Gather this code)
                             if(${OS_MACOS})
                                 if(lib_soversion)
                                     list(APPEND ${BINARY_PATHS_LIST} ${dir}/${baseName}.${lib_soversion}.dylib) 
@@ -191,7 +195,7 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                             #message("using genex")
                             list(APPEND ${BINARY_PATHS_LIST} $<TARGET_FILE:${lib}>)
 
-                            #gather symbolic links (TODO Cather this code)
+                            #gather symbolic links (TODO Gather this code)
                             if(${OS_MACOS})
                                 if(lib_soversion)
                                     list(APPEND ${BINARY_PATHS_LIST} ${full_binary_dir}/$<PATH:REMOVE_EXTENSION,$<TARGET_FILE_NAME:${lib}>>.${lib_soversion}.dylib) 
@@ -204,6 +208,7 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                                     list(APPEND ${BINARY_PATHS_LIST} ${full_binary_dir}/$<PATH:REMOVE_EXTENSION,$<TARGET_FILE_NAME:${lib}>>.so) 
                                 endif()
                             endif()
+
                         endif()
 
                         if((${CMAKE_BUILD_TYPE} MATCHES "Deb+") AND (${OS_WINDOWS}))
@@ -230,6 +235,12 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                 elseif((${target_type} STREQUAL "EXECUTABLE"))
                     #message("adding $<TARGET_FILE:${lib}> to bin paths list")
                     list(APPEND ${BINARY_PATHS_LIST} $<TARGET_FILE:${lib}>)
+                # elseif((${target_type} STREQUAL "MODULE_LIBRARY"))
+                #     list(APPEND ${BINARY_PATHS_LIST} $<TARGET_FILE:${lib}>)
+
+                elseif((${target_type} STREQUAL "INTERFACE_LIBRARY"))
+                    #message("${lib} is an interface library")
+                    
                 endif()
 
                 #also add files that are "attached" via the EXTRA_FILE_ATTACHEMENTS
@@ -292,7 +303,7 @@ function(add_binary_copy_commands TOP_TARGET DESTINATION_DIR)
     #message("DEP_CHAIN_TARGET is ${DEP_CHAIN_TARGET}")
 
     get_all_binary_dependancy_files(${DEP_CHAIN_TARGET} ${DEP_CHAIN_TARGET} list)
-    message("binary dependancy list for TOP_TARGET: ${TOP_TARGET} is ${list}")
+    #message("binary dependancy list for TOP_TARGET: ${TOP_TARGET} is ${list}")
     foreach(binaryPath ${list})
         #message("binaryPath is ${binaryPath}")
         string_contains_generator_exp(${binaryPath} hasGenEx)
