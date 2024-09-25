@@ -70,7 +70,7 @@ endfunction()
 function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST)
 
     get_target_property(cur_target_type ${CUR_TARGET} TYPE)
-    message("target ${CUR_TARGET} is of type ${cur_target_type}")
+    #message("target ${CUR_TARGET} is of type ${cur_target_type}")
     
     if(${cur_target_type} STREQUAL "INTERFACE_LIBRARY")
         get_target_property(linkLibs ${CUR_TARGET} INTERFACE_LINK_LIBRARIES)
@@ -123,8 +123,8 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                 #resolve lib file name
                 get_target_property(lib_soversion ${lib} SOVERSION)
                 get_target_property(lib_version ${lib} VERSION)
-                #message("lib_soversion for ${lib} is ${lib_soversion}")
-                #message("lib_version for ${lib} is ${lib_version}")
+                message("lib_soversion for ${lib} is ${lib_soversion}")
+                message("lib_version for ${lib} is ${lib_version}")
 
 
 
