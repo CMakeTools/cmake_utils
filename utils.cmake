@@ -70,7 +70,7 @@ endfunction()
 function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST)
 
     get_target_property(cur_target_type ${CUR_TARGET} TYPE)
-    #message("target ${CUR_TARGET} is of type ${cur_target_type}")
+    message("target ${CUR_TARGET} is of type ${cur_target_type}")
     
     if(${cur_target_type} STREQUAL "INTERFACE_LIBRARY")
         get_target_property(linkLibs ${CUR_TARGET} INTERFACE_LINK_LIBRARIES)
@@ -86,13 +86,22 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
     endif()
 
     #message("extrLinkLibs for ${CUR_TARGET} is: ${extrLinkLibs}")
-    #message("linkLibs for ${CUR_TARGET} is: ${linkLibs}")
+    message("linkLibs for ${CUR_TARGET} is: ${linkLibs}")
 
     if(NOT(linkLibs STREQUAL "linkLibs-NOTFOUND"))
         foreach(lib IN LISTS linkLibs)
             #message("lib is ${lib}")
 
-            if(TARGET ${lib})
+
+            #conan puts interface link libraries in genex - do a specific conan extraction to get actaul target
+            #this seems the only path forward for getting configure time binary paths out of conan.
+            string(REGEX MATCH "CONAN_LIB::+[^>]+" conanExtraction ${lib})
+            if(conanExtraction)
+                set(lib ${conanExtraction})
+            endif()
+
+
+            if(TARGET ${lib})#TODO this fails of imported interface targets?
 
                 #get real target
                 get_target_property(realLib ${lib} ALIASED_TARGET)
@@ -242,6 +251,9 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                 elseif((${target_type} STREQUAL "INTERFACE_LIBRARY"))
                     #message("${lib} is an interface library")
                     
+                elseif((${target_type} STREQUAL "UNKNOWN_LIBRARY"))
+                    #no reliable extraction
+                    #list(APPEND ${BINARY_PATHS_LIST} $<TARGET_FILE:${lib}>)
                 endif()
 
                 #also add files that are "attached" via the EXTRA_FILE_ATTACHEMENTS
