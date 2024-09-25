@@ -245,22 +245,22 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                 endif()
 
                 #also add files that are "attached" via the EXTRA_FILE_ATTACHEMENTS
-                get_target_property(extra_attachments ${lib} EXTRA_FILE_ATTACHEMENTS)
-                #message("extra attachments from lib - ${lib}: ${extra_attachments}")
-                if( extra_attachments )
-                    #message("adding extra attachments from lib - ${lib}: ${extra_attachments}")
-                    list(APPEND ${BINARY_PATHS_LIST} "${extra_attachments}")
+                get_target_property(extra_file_attachments ${lib} EXTRA_FILE_ATTACHEMENTS)
+
+                if( extra_file_attachments )
+                    #message("adding extra attachments from lib - ${lib}: ${extra_file_attachments}")
+                    list(APPEND ${BINARY_PATHS_LIST} "${extra_file_attachments}")
                     set(${BINARY_PATHS_LIST} ${${BINARY_PATHS_LIST}} PARENT_SCOPE)
                 endif()
 
 
-                get_target_property(extra_side_attachments ${lib} EXTRA_SIDE_FILE_ATTACHEMENT_NAMES)
-                #message("extra_side_attachments for ${lib} is ${extra_side_attachments}")
-                if( extra_side_attachments )
+                get_target_property(extra_side_filename_attachments ${lib} EXTRA_SIDE_FILE_ATTACHEMENT_NAMES)
+                #message("extra_side_filename_attachments for ${lib} is ${extra_side_filename_attachments}")
+                if( extra_side_filename_attachments )
                     #message("EXTRA SIDE ATTACHEMENT!")
-                    list(TRANSFORM extra_side_attachments PREPEND "${full_binary_dir}/")
+                    list(TRANSFORM extra_side_filename_attachments PREPEND "${full_binary_dir}/")
                 
-                    list(APPEND ${BINARY_PATHS_LIST} "${extra_side_attachments}")
+                    list(APPEND ${BINARY_PATHS_LIST} "${extra_side_filename_attachments}")
                     set(${BINARY_PATHS_LIST} ${${BINARY_PATHS_LIST}} PARENT_SCOPE)
                 endif()
 
