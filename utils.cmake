@@ -86,7 +86,7 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
     endif()
 
     #message("extrLinkLibs for ${CUR_TARGET} is: ${extrLinkLibs}")
-    message("linkLibs for ${CUR_TARGET} is: ${linkLibs}")
+    #message("linkLibs for ${CUR_TARGET} is: ${linkLibs}")
 
     if(NOT(linkLibs STREQUAL "linkLibs-NOTFOUND"))
         foreach(lib IN LISTS linkLibs)
@@ -123,8 +123,8 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                 #resolve lib file name
                 get_target_property(lib_soversion ${lib} SOVERSION)
                 get_target_property(lib_version ${lib} VERSION)
-                message("lib_soversion for ${lib} is ${lib_soversion}")
-                message("lib_version for ${lib} is ${lib_version}")
+                #message("lib_soversion for ${lib} is ${lib_soversion}")
+                #message("lib_version for ${lib} is ${lib_version}")
 
 
 
