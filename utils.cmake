@@ -1,7 +1,8 @@
+include_guard(DIRECTORY)
 
-
-
-
+#find the full path to this utils.cmake file
+include(utils RESULT_VARIABLE utils_file_path)
+cmake_path(GET utils_file_path PARENT_PATH utils_file_dir)
 
 #super searcher to get all target depencies of TOP_TARGET.
 function(get_all_target_dependancies CUR_TARGET TOP_TARGET TARGET_LIST)
@@ -317,7 +318,7 @@ function(add_binary_copy_commands TOP_TARGET DESTINATION_DIR)
             #https://gitlab.kitware.com/cmake/cmake/-/issues/14609
             add_custom_command(
                 TARGET ${TOP_TARGET} PRE_LINK 
-                COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/simple_file_copy.cmake --
+                COMMAND ${CMAKE_COMMAND} -P ${utils_file_dir}/simple_file_copy.cmake --
                 ${binaryPath}
                 ${DESTINATION_DIR}/${effectivefileonly}
                 COMMENT "Copy ${binaryPath} to ${DESTINATION_DIR}/${effectivefileonly}"
@@ -329,7 +330,7 @@ function(add_binary_copy_commands TOP_TARGET DESTINATION_DIR)
             #https://gitlab.kitware.com/cmake/cmake/-/issues/14609
             add_custom_command(
                 TARGET ${TOP_TARGET} PRE_LINK 
-                COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/simple_file_copy.cmake --
+                COMMAND ${CMAKE_COMMAND} -P ${utils_file_dir}/simple_file_copy.cmake --
                 ${binaryPath}
                 ${DESTINATION_DIR}/${binaryFileName}
                 COMMENT "Copy ${binaryPath} to ${DESTINATION_DIR}/${binaryFileName}"
