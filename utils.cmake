@@ -69,9 +69,15 @@ endfunction()
 #set NO_GENEX to True avoid generator expressions in final BINARY_PATHS_LIST
 function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST)
 
-    get_target_property(cur_target_type ${CUR_TARGET} TYPE)
-    #message("target ${CUR_TARGET} is of type ${cur_target_type}")
+    if (TARGET ${CUR_TARGET})
+        get_target_property(cur_target_type ${CUR_TARGET} TYPE)
+        #message("target ${CUR_TARGET} is of type ${cur_target_type}")
     
+    else()
+        return()
+    endif()
+
+
     if(${cur_target_type} STREQUAL "INTERFACE_LIBRARY")
         get_target_property(linkLibs ${CUR_TARGET} INTERFACE_LINK_LIBRARIES)
     else()
@@ -98,8 +104,16 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
             string(REGEX MATCH "CONAN_LIB::+[^>]+" conanExtraction ${lib})
             if(conanExtraction)
                 set(lib ${conanExtraction})
-            endif()
 
+                get_target_property(subDeps ${lib} INTERFACE_LINK_LIBRARIES )
+                #message("Conan subdeps of target ${lib} are ${subDeps}")
+
+                #recurse
+                foreach(subdep IN LISTS subDeps)
+                    get_all_binary_dependancy_files(${subdep} ${lib} ${BINARY_PATHS_LIST})
+                endforeach()
+            endif()
+            
 
             if(TARGET ${lib})#TODO this fails of imported interface targets?
 
@@ -113,7 +127,7 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                 #message("target_type of ${lib} is ${target_type}")
 
                 get_target_property(full_binary_dir ${lib} BINARY_DIR)
-                set(full_binary_dir ${full_binary_dir}/${CMAKE_CFG_INTDIR})
+                set(full_binary_dir ${full_binary_dir}/${CMAKE_CFG_INTDIR})#TODO https://cmake.org/cmake/help/latest/variable/CMAKE_CFG_INTDIR.html
 
                 #message("full_binary_dir is ${full_binary_dir}")
 
@@ -127,7 +141,8 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                 #message("lib_version for ${lib} is ${lib_version}")
 
 
-
+                #get_target_property(loc ${lib} LOCATION)
+                #message("LOCATION for ${lib} is ${loc}")
 
                 if(${CMAKE_BUILD_TYPE} MATCHES "Rel+")
                     get_target_property(imported_loc ${lib} IMPORTED_LOCATION)
@@ -244,13 +259,21 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                     #message("lib is shared: ${lib}")
                 elseif((${target_type} STREQUAL "EXECUTABLE"))
                     #message("adding $<TARGET_FILE:${lib}> to bin paths list")
-                    list(APPEND ${BINARY_PATHS_LIST} $<TARGET_FILE:${lib}>)
+                    
                 # elseif((${target_type} STREQUAL "MODULE_LIBRARY"))
                 #     list(APPEND ${BINARY_PATHS_LIST} $<TARGET_FILE:${lib}>)
 
                 elseif((${target_type} STREQUAL "INTERFACE_LIBRARY"))
                     #message("${lib} is an interface library")
+                    get_target_property(subDeps ${lib} INTERFACE_LINK_LIBRARIES )
+                    message("INTERFACE_LINK_LIBRARIES of target ${lib} are ${subDeps}")
                     
+                    #recurse
+                    foreach(subdep IN LISTS subDeps)
+                        get_all_binary_dependancy_files(${subdep} ${lib} ${BINARY_PATHS_LIST})
+                    endforeach()
+
+
                 elseif((${target_type} STREQUAL "UNKNOWN_LIBRARY"))
                     #no reliable extraction
                     #list(APPEND ${BINARY_PATHS_LIST} $<TARGET_FILE:${lib}>)
@@ -569,6 +592,52 @@ endfunction()
 
 
 
+function(set_general_local_rpath_raw_files)
+
+    set(options  )
+    set(oneValueArgs  )
+    set(multiValueArgs BINARY_FILE_LIST RELATIVE_PATHS_LIST)
+    cmake_parse_arguments("set_general_local_rpath_raw_files" "${options}" "${oneValueArgs}"
+                        "${multiValueArgs}" ${ARGN} )
+
+
+    foreach(binary ${set_general_local_rpath_raw_files_BINARY_FILE_LIST})
+    #set rpaths to ONLY $ORIGIN
+    if(${OS_LINUX})
+
+            set(rPathString "")
+            foreach(relPath ${set_general_local_rpath_raw_files_RELATIVE_PATHS_LIST})
+                set(rPathString ${rPathString}:\$ORIGIN${relPath})
+            endforeach()
+
+            execute_process(
+                COMMAND patchelf "--set-rpath" ${rPathString} "--debug" "${binary}"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                COMMAND_ECHO STDOUT
+            )
+
+
+    elseif( ${OS_MACOS} )
+
+
+            #foreach(relPath ${RELATIVE_PATHS_LIST})
+               
+            execute_process(
+                COMMAND install_name_tool "-add_rpath" "@loader_path/." "${binary}"
+                WORKING_DIRECTORY ${FULL_BIN_DIR}
+                COMMENT "Adding rpath \@loader_path/. to ${binary}"
+            )
+
+            #endforeach()
+
+            
+    endif()
+
+    endforeach()
+
+endfunction()
+
+
 #add post build commands to set rpaths for executables and shared_libs
 function(add_general_local_rpath_setup TARGET_NAME RELATIVE_PATHS_LIST)
     #set rpaths to ONLY $ORIGIN
@@ -580,17 +649,13 @@ function(add_general_local_rpath_setup TARGET_NAME RELATIVE_PATHS_LIST)
             foreach(relPath ${RELATIVE_PATHS_LIST})
                 set(rPathString ${rPathString}:\$ORIGIN${relPath})
             endforeach()
-            
 
-        
             add_custom_command(
                 TARGET ${TARGET_NAME} POST_BUILD
                 COMMAND patchelf "--set-rpath" ${rPathString} "--debug" "$<TARGET_FILE:${TARGET_NAME}>"
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                 VERBATIM
             )
-
-
         endif()
 
 
@@ -644,7 +709,6 @@ function(add_general_local_rpath_setup TARGET_NAME RELATIVE_PATHS_LIST)
 
     endif()
 endfunction()
-
 
 
 
