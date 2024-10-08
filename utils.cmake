@@ -625,7 +625,7 @@ function(set_general_local_rpath_raw_files)
             execute_process(
                 COMMAND install_name_tool "-add_rpath" "@loader_path/." "${binary}"
                 WORKING_DIRECTORY ${FULL_BIN_DIR}
-                COMMENT "Adding rpath \@loader_path/. to ${binary}"
+                COMMAND_ECHO STDOUT
             )
 
             #endforeach()
