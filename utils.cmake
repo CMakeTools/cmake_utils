@@ -356,7 +356,7 @@ function(add_binary_copy_commands TOP_TARGET DESTINATION_DIR)
                 COMMAND ${CMAKE_COMMAND} -P ${utils_file_dir}/simple_file_copy.cmake --
                 ${binaryPath}
                 ${DESTINATION_DIR}/${effectivefileonly}
-                COMMENT "Copy ${binaryPath} to ${DESTINATION_DIR}/${effectivefileonly}"
+                #COMMENT "Copy ${binaryPath} to ${DESTINATION_DIR}/${effectivefileonly}"
                 )
 
         else()
@@ -368,7 +368,7 @@ function(add_binary_copy_commands TOP_TARGET DESTINATION_DIR)
                 COMMAND ${CMAKE_COMMAND} -P ${utils_file_dir}/simple_file_copy.cmake --
                 ${binaryPath}
                 ${DESTINATION_DIR}/${binaryFileName}
-                COMMENT "Copy ${binaryPath} to ${DESTINATION_DIR}/${binaryFileName}"
+                #COMMENT "Copy ${binaryPath} to ${DESTINATION_DIR}/${binaryFileName}"
                 )
         endif()
 
