@@ -266,7 +266,7 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                 elseif((${target_type} STREQUAL "INTERFACE_LIBRARY"))
                     #message("${lib} is an interface library")
                     get_target_property(subDeps ${lib} INTERFACE_LINK_LIBRARIES )
-                    message("INTERFACE_LINK_LIBRARIES of target ${lib} are ${subDeps}")
+                    #message("INTERFACE_LINK_LIBRARIES of target ${lib} are ${subDeps}")
                     
                     #recurse
                     foreach(subdep IN LISTS subDeps)
