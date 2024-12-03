@@ -69,6 +69,7 @@ endfunction()
 #set NO_GENEX to True avoid generator expressions in final BINARY_PATHS_LIST
 function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST)
 
+    #message("CUR_TARGET is ${CUR_TARGET}")
     if (TARGET ${CUR_TARGET})
         get_target_property(cur_target_type ${CUR_TARGET} TYPE)
         #message("target ${CUR_TARGET} is of type ${cur_target_type}")
@@ -99,10 +100,11 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
             #message("lib is ${lib}")
 
 
-            #conan puts interface link libraries in genex - do a specific conan extraction to get actaul target
+            #conan puts interface link libraries in genex - do a specific conan extraction to get actual target
             #this seems the only path forward for getting configure time binary paths out of conan.
             string(REGEX MATCH "CONAN_LIB::+[^>]+" conanExtraction ${lib})
             if(conanExtraction)
+                #message("conanExtraction is ${conanExtraction}")
                 set(lib ${conanExtraction})
 
                 get_target_property(subDeps ${lib} INTERFACE_LINK_LIBRARIES )
@@ -110,6 +112,7 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
 
                 #recurse
                 foreach(subdep IN LISTS subDeps)
+                    #message("recurse C")
                     get_all_binary_dependancy_files(${subdep} ${lib} ${BINARY_PATHS_LIST})
                 endforeach()
             endif()
@@ -270,7 +273,18 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                     
                     #recurse
                     foreach(subdep IN LISTS subDeps)
-                        get_all_binary_dependancy_files(${subdep} ${lib} ${BINARY_PATHS_LIST})
+
+                        #in some cases (conan) INTERFACE_LINK_LIBRARIES contains the lib itself - which would lead to recursion - so don't parse it.
+                        set(SKIP FALSE)
+                        if( "${subdep}" STREQUAL "${lib}" )
+                            #message("FNVIUC")
+                            set(SKIP TRUE)
+                        endif()
+
+                        if(NOT ${SKIP})
+                            #message("recurse B")
+                            get_all_binary_dependancy_files(${subdep} ${lib} ${BINARY_PATHS_LIST})
+                        endif()
                     endforeach()
 
 
@@ -299,8 +313,10 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                     set(${BINARY_PATHS_LIST} ${${BINARY_PATHS_LIST}} PARENT_SCOPE)
                 endif()
 
-
+                #message("recurse A with lib ${lib}, CUR_TARGET is ${CUR_TARGET}")
+                if(NOT (${lib} STREQUAL ${CUR_TARGET}))#avoid basic infinite recursion
                 get_all_binary_dependancy_files(${lib} ${TOP_TARGET} ${BINARY_PATHS_LIST})
+                endif()
             endif()
         endforeach()
 
@@ -308,7 +324,7 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
 
     list(REMOVE_DUPLICATES ${BINARY_PATHS_LIST})
     set(${BINARY_PATHS_LIST} ${${BINARY_PATHS_LIST}} PARENT_SCOPE)
-
+    #message("function end")
 endfunction()
 
 function(string_contains_generator_exp STRING_VAR RESULT_BOOL)
