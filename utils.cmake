@@ -728,7 +728,55 @@ endfunction()
 
 
 
+#get the bin files from a conan package at config time.
+function(get_conan_bin_files_config_time)
+    set(options TARGET_NAMESPACE TARGET_NAME)
+    set(oneValueArgs  )
+    set(multiValueArgs CONAN_PACKAGE_NAME BINARIES_LIST)
+    cmake_parse_arguments("arg_get_conan_bin_files_config_time" "${options}" "${oneValueArgs}"
+                        "${multiValueArgs}" ${ARGN} )
 
+    set(buildTypeCaps ${CMAKE_BUILD_TYPE})
+    string(TOUPPER ${buildTypeCaps} buildTypeCaps)
+                        
+    
+    #set(fullPrefix "${arg_get_conan_bin_files_config_time_CONAN_PACKAGE_NAME}_${arg_get_conan_bin_files_config_time_TARGET_NAMESPACE}_${arg_get_conan_bin_files_config_time_TARGET_NAME}")
+    set(fullPrefix "${arg_get_conan_bin_files_config_time_CONAN_PACKAGE_NAME}")
+    #append to prefix if more full name is specified
+    if(arg_get_conan_bin_files_config_time_TARGET_NAMESPACE)
+        set(fullPrefix "${fullPrefix}_${arg_get_conan_bin_files_config_time_TARGET_NAMESPACE}")
+        if(arg_get_conan_bin_files_config_time_TARGET_NAME)
+            set(fullPrefix "${fullPrefix}_${arg_get_conan_bin_files_config_time_TARGET_NAME}")
+        endif()
+    endif()
+
+    #message("fullPrefix is ${fullPrefix}")
+
+    if(OS_WINDOWS)
+        #message("${fullPrefix}_BIN_DIRS_${buildTypeCaps} is ${${fullPrefix}_BIN_DIRS_${buildTypeCaps}}")
+        file(GLOB_RECURSE ${arg_get_conan_bin_files_config_time_CONAN_PACKAGE_NAME}_dylibs "${${fullPrefix}_BIN_DIRS_${buildTypeCaps}}/*.dll")
+
+        set(binariesList ${${arg_get_conan_bin_files_config_time_CONAN_PACKAGE_NAME}_dylibs})
+
+
+    elseif(OS_LINUX)
+
+        file(GLOB_RECURSE ${arg_get_conan_bin_files_config_time_CONAN_PACKAGE_NAME}_dylibs "${${fullPrefix}_LIB_DIRS_${buildTypeCaps}}/*.so")
+        file(GLOB_RECURSE ${arg_get_conan_bin_files_config_time_CONAN_PACKAGE_NAME}_dylibs2 "${${fullPrefix}_LIB_DIRS_${buildTypeCaps}}/*.so.*")
+
+        set(binariesList "${${arg_get_conan_bin_files_config_time_CONAN_PACKAGE_NAME}_dylibs};${${arg_get_conan_bin_files_config_time_CONAN_PACKAGE_NAME}_dylibs2}")
+
+    elseif(OS_MACOS)
+
+        file(GLOB_RECURSE ${arg_get_conan_bin_files_config_time_CONAN_PACKAGE_NAME}_dylibs "${${fullPrefix}_LIB_DIRS_${buildTypeCaps}}/*.dylib")
+
+        set(binariesList ${${arg_get_conan_bin_files_config_time_CONAN_PACKAGE_NAME}_dylibs})
+
+    endif()
+
+    set(${arg_get_conan_bin_files_config_time_BINARIES_LIST} "${binariesList}" PARENT_SCOPE)
+
+endfunction()
 
 
 
