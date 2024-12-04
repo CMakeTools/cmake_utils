@@ -246,7 +246,7 @@ function(get_all_binary_dependancy_files CUR_TARGET TOP_TARGET BINARY_PATHS_LIST
                                 list(APPEND ${BINARY_PATHS_LIST} ${libPDBFilePath}) 
 
                             else()
-
+                                #This may not always resolve to a valid filename
                                 list(APPEND ${BINARY_PATHS_LIST} ${full_binary_dir}/$<PATH:REMOVE_EXTENSION,$<TARGET_FILE_NAME:${lib}>>.pdb) 
 
                             endif()
@@ -378,6 +378,15 @@ function(add_binary_copy_commands TOP_TARGET DESTINATION_DIR)
         else()
 
             get_filename_component(binaryFileName ${binaryPath} NAME)
+
+            #in magnum libs $(Configuration) is sometimes present https://github.com/mosra/magnum
+            string(REPLACE "$(Configuration)" "${CMAKE_BUILD_TYPE}" binaryPath ${binaryPath})
+
+            #since no generator expressions - can check for file existence before creating the command and issue warning for any missing files.
+            
+            if(NOT (EXISTS ${binaryPath}))
+                message(WARNING "Unable to find file ${binaryPath}")
+            else()
             #https://gitlab.kitware.com/cmake/cmake/-/issues/14609
             add_custom_command(
                 TARGET ${TOP_TARGET} PRE_LINK 
@@ -386,6 +395,8 @@ function(add_binary_copy_commands TOP_TARGET DESTINATION_DIR)
                 ${DESTINATION_DIR}/${binaryFileName}
                 #COMMENT "Copy ${binaryPath} to ${DESTINATION_DIR}/${binaryFileName}"
                 )
+            endif()
+            
         endif()
 
 
