@@ -382,11 +382,8 @@ function(add_binary_copy_commands TOP_TARGET DESTINATION_DIR)
             #in magnum libs $(Configuration) is sometimes present https://github.com/mosra/magnum
             string(REPLACE "$(Configuration)" "${CMAKE_BUILD_TYPE}" binaryPath ${binaryPath})
 
-            #since no generator expressions - can check for file existence before creating the command and issue warning for any missing files.
-            
-            if(NOT (EXISTS ${binaryPath}))
-                message(WARNING "Unable to find file ${binaryPath}")
-            else()
+
+
             #https://gitlab.kitware.com/cmake/cmake/-/issues/14609
             add_custom_command(
                 TARGET ${TOP_TARGET} PRE_LINK 
@@ -395,7 +392,7 @@ function(add_binary_copy_commands TOP_TARGET DESTINATION_DIR)
                 ${DESTINATION_DIR}/${binaryFileName}
                 #COMMENT "Copy ${binaryPath} to ${DESTINATION_DIR}/${binaryFileName}"
                 )
-            endif()
+            
             
         endif()
 
